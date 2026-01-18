@@ -5,6 +5,7 @@ import type { Issue } from '../types';
 import { useBeadsStore } from '../state/store';
 import { getTheme } from '../themes/themes';
 import { VALIDATION, validateTitle, PRIORITY_LABELS, STATUS_LABELS } from '../utils/constants';
+import { ScrollableTextbox } from './ScrollableTextbox';
 
 interface EditIssueFormProps {
   issue: Issue;
@@ -259,15 +260,15 @@ export function EditIssueForm({ issue, onClose, onSuccess }: EditIssueFormProps)
       </Box>
 
       {/* Form Content */}
-      <Box flexDirection="column" padding={2} borderStyle="single" borderColor={primaryColor}>
-        {/* Title - with character count and change indicator */}
-        <Box flexDirection="column" marginBottom={2}>
+      <Box flexDirection="column" padding={1} borderStyle="single" borderColor={primaryColor} flexGrow={1}>
+        {/* Title */}
+        <Box flexDirection="column" marginBottom={1}>
           <Box justifyContent="space-between">
             <Box gap={1}>
               <Text color={currentField === 'title' ? primaryColor : theme.colors.text} bold>
                 Title * {currentField === 'title' && <Text color={primaryColor}>(editing)</Text>}
               </Text>
-              {isFieldChanged('title') && <Text color={theme.colors.warning}>[modified]</Text>}
+              {isFieldChanged('title') && <Text color={theme.colors.warning}>[mod]</Text>}
             </Box>
             <Text color={titleCharCount > VALIDATION.title.maxLength * 0.9 ? theme.colors.warning : theme.colors.textDim}>
               {titleCharCount}/{VALIDATION.title.maxLength}
@@ -292,84 +293,58 @@ export function EditIssueForm({ issue, onClose, onSuccess }: EditIssueFormProps)
           )}
         </Box>
 
-        {/* Status, Priority in a row - Status first since it's often the primary edit */}
-        <Box gap={4} marginBottom={2}>
+        {/* Status, Priority, Type in one row */}
+        <Box gap={2} marginBottom={1}>
           {/* Status */}
-          <Box flexDirection="column" width="50%">
-            <Box gap={1}>
-              <Text color={currentField === 'status' ? primaryColor : theme.colors.text} bold>
-                Status {currentField === 'status' && <Text color={primaryColor}>(use up/down)</Text>}
-              </Text>
-              {isFieldChanged('status') && <Text color={theme.colors.warning}>[modified]</Text>}
-            </Box>
-            <Box
-              borderStyle="single"
-              borderColor={
-                currentField === 'status'
-                  ? primaryColor
-                  : isFieldChanged('status')
-                  ? theme.colors.warning
-                  : theme.colors.border
-              }
-              paddingX={1}
-            >
-              <Text color={theme.colors.text}>
-                {STATUS_LABELS[formData.status] || formData.status}
-              </Text>
+          <Box flexDirection="column" width="33%">
+            <Text color={currentField === 'status' ? primaryColor : theme.colors.text} bold>
+              Status {currentField === 'status' && '↑↓'}
+            </Text>
+            <Box borderStyle="single" borderColor={currentField === 'status' ? primaryColor : isFieldChanged('status') ? theme.colors.warning : theme.colors.border} paddingX={1}>
+              <Text>{STATUS_LABELS[formData.status]}</Text>
             </Box>
           </Box>
 
           {/* Priority */}
-          <Box flexDirection="column" width="50%">
-            <Box gap={1}>
-              <Text color={currentField === 'priority' ? primaryColor : theme.colors.text} bold>
-                Priority {currentField === 'priority' && <Text color={primaryColor}>(use up/down)</Text>}
-              </Text>
-              {isFieldChanged('priority') && <Text color={theme.colors.warning}>[modified]</Text>}
+          <Box flexDirection="column" width="33%">
+            <Text color={currentField === 'priority' ? primaryColor : theme.colors.text} bold>
+              Priority {currentField === 'priority' && '↑↓'}
+            </Text>
+            <Box borderStyle="single" borderColor={currentField === 'priority' ? primaryColor : isFieldChanged('priority') ? theme.colors.warning : theme.colors.border} paddingX={1}>
+              <Text>P{formData.priority}</Text>
             </Box>
-            <Box
-              borderStyle="single"
-              borderColor={
-                currentField === 'priority'
-                  ? primaryColor
-                  : isFieldChanged('priority')
-                  ? theme.colors.warning
-                  : theme.colors.border
-              }
-              paddingX={1}
-            >
-              <Text color={theme.colors.text}>
-                P{formData.priority} - {PRIORITY_LABELS[formData.priority]}
-              </Text>
+          </Box>
+
+          {/* Type (read-only) */}
+          <Box flexDirection="column" width="33%">
+            <Text color={theme.colors.textDim} bold>Type</Text>
+            <Box borderStyle="single" borderColor={theme.colors.border} paddingX={1}>
+              <Text color={theme.colors.textDim}>{issue.issue_type}</Text>
             </Box>
           </Box>
         </Box>
 
-        {/* Issue Type (read-only) */}
-        <Box flexDirection="column" marginBottom={2} width="50%">
-          <Text color={theme.colors.textDim} bold>
-            Type <Text color={theme.colors.textDim}>(read-only)</Text>
-          </Text>
-          <Box borderStyle="single" borderColor={theme.colors.border} paddingX={1}>
-            <Text color={theme.colors.textDim}>{issue.issue_type || 'task'}</Text>
-          </Box>
-        </Box>
-
-        {/* Description */}
-        <Box flexDirection="column" marginBottom={2}>
+        {/* Description - takes up remaining space */}
+        <Box flexDirection="column" marginBottom={1} flexGrow={1}>
           <Box justifyContent="space-between">
-            <Box gap={1}>
-              <Text color={currentField === 'description' ? primaryColor : theme.colors.text} bold>
-                Description {currentField === 'description' && <Text color={primaryColor}>(editing)</Text>}
-              </Text>
-              {isFieldChanged('description') && <Text color={theme.colors.warning}>[modified]</Text>}
-            </Box>
+            <Text color={currentField === 'description' ? primaryColor : theme.colors.text} bold>
+              Description {currentField === 'description' && <Text color={primaryColor}>(editing)</Text>} {isFieldChanged('description') && <Text color={theme.colors.warning}>[mod]</Text>}
+            </Text>
             <Text color={theme.colors.textDim}>
               {formData.description.length}/{VALIDATION.description.maxLength}
             </Text>
           </Box>
-          <Box
-            borderStyle="single"
+          {currentField === 'description' && (
+            <Text color={theme.colors.textDim} dimColor>
+              Page Up/Ctrl+P: scroll up | Page Down/Ctrl+N: scroll down | Type to edit
+            </Text>
+          )}
+          <ScrollableTextbox
+            value={formData.description || '(no description)'}
+            maxHeight={28}
+            maxWidth={Math.max(40, terminalWidth - 6)}
+            textColor={currentField === 'description' ? primaryColor : theme.colors.text}
+            dimColor={theme.colors.textDim}
             borderColor={
               currentField === 'description'
                 ? primaryColor
@@ -377,76 +352,44 @@ export function EditIssueForm({ issue, onClose, onSuccess }: EditIssueFormProps)
                 ? theme.colors.warning
                 : theme.colors.border
             }
-            paddingX={1}
-          >
-            <Text>{formData.description || <Text color={theme.colors.textDim}>(no description)</Text>}</Text>
-            {currentField === 'description' && <Text color={theme.colors.textDim}>|</Text>}
-          </Box>
+            isActive={currentField === 'description'}
+          />
         </Box>
 
-        {/* Assignee */}
-        <Box flexDirection="column" marginBottom={2}>
-          <Box gap={1}>
+        {/* Assignee and Labels in a row */}
+        <Box gap={2} marginBottom={1}>
+          {/* Assignee */}
+          <Box flexDirection="column" width="50%">
             <Text color={currentField === 'assignee' ? primaryColor : theme.colors.text} bold>
-              Assignee {currentField === 'assignee' && <Text color={primaryColor}>(editing)</Text>}
+              Assignee {currentField === 'assignee' && <Text color={primaryColor}>(editing)</Text>} {isFieldChanged('assignee') && <Text color={theme.colors.warning}>[mod]</Text>}
             </Text>
-            {isFieldChanged('assignee') && <Text color={theme.colors.warning}>[modified]</Text>}
+            <Box borderStyle="single" borderColor={currentField === 'assignee' ? primaryColor : isFieldChanged('assignee') ? theme.colors.warning : theme.colors.border} paddingX={1}>
+              <Text>{formData.assignee || <Text color={theme.colors.textDim}>unassigned</Text>}</Text>
+              {currentField === 'assignee' && <Text color={theme.colors.textDim}>|</Text>}
+            </Box>
           </Box>
-          <Box
-            borderStyle="single"
-            borderColor={
-              currentField === 'assignee'
-                ? primaryColor
-                : isFieldChanged('assignee')
-                ? theme.colors.warning
-                : theme.colors.border
-            }
-            paddingX={1}
-          >
-            <Text>{formData.assignee || <Text color={theme.colors.textDim}>(unassigned)</Text>}</Text>
-            {currentField === 'assignee' && <Text color={theme.colors.textDim}>|</Text>}
-          </Box>
-        </Box>
 
-        {/* Labels */}
-        <Box flexDirection="column" marginBottom={2}>
-          <Box gap={1}>
+          {/* Labels */}
+          <Box flexDirection="column" width="50%">
             <Text color={currentField === 'labels' ? primaryColor : theme.colors.text} bold>
-              Labels {currentField === 'labels' && <Text color={primaryColor}>(editing)</Text>}
+              Labels {currentField === 'labels' && <Text color={primaryColor}>(editing)</Text>} {isFieldChanged('labels') && <Text color={theme.colors.warning}>[mod]</Text>}
             </Text>
-            {isFieldChanged('labels') && <Text color={theme.colors.warning}>[modified]</Text>}
+            <Box borderStyle="single" borderColor={currentField === 'labels' ? primaryColor : isFieldChanged('labels') ? theme.colors.warning : theme.colors.border} paddingX={1}>
+              <Text>{formData.labels || <Text color={theme.colors.textDim}>none</Text>}</Text>
+              {currentField === 'labels' && <Text color={theme.colors.textDim}>|</Text>}
+            </Box>
           </Box>
-          <Box
-            borderStyle="single"
-            borderColor={
-              currentField === 'labels'
-                ? primaryColor
-                : isFieldChanged('labels')
-                ? theme.colors.warning
-                : theme.colors.border
-            }
-            paddingX={1}
-          >
-            <Text>{formData.labels || <Text color={theme.colors.textDim}>(no labels - comma-separated)</Text>}</Text>
-            {currentField === 'labels' && <Text color={theme.colors.textDim}>|</Text>}
-          </Box>
-          {formData.labels && (
-            <Text color={theme.colors.textDim}>
-              Labels: {formData.labels.split(',').map(l => l.trim()).filter(l => l).join(', ') || '(none)'}
-            </Text>
-          )}
         </Box>
 
         {/* Status messages */}
         {error && (
-          <Box marginTop={1} borderStyle="single" borderColor={theme.colors.error} paddingX={1}>
-            <Text color={theme.colors.error} bold>Error: </Text>
-            <Text color={theme.colors.error}>{error}</Text>
+          <Box borderStyle="single" borderColor={theme.colors.error} paddingX={1}>
+            <Text color={theme.colors.error} bold>Error: {error}</Text>
           </Box>
         )}
 
         {isSubmitting && (
-          <Box marginTop={1}>
+          <Box>
             <Text color={theme.colors.warning}>Updating issue...</Text>
           </Box>
         )}

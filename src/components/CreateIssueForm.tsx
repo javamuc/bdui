@@ -4,6 +4,7 @@ import { createIssue } from '../bd/commands';
 import { useBeadsStore } from '../state/store';
 import { getTheme } from '../themes/themes';
 import { VALIDATION, validateTitle, PRIORITY_LABELS } from '../utils/constants';
+import { ScrollableTextbox } from './ScrollableTextbox';
 
 interface CreateIssueFormProps {
   onClose: () => void;
@@ -191,7 +192,7 @@ export function CreateIssueForm({ onClose, onSuccess }: CreateIssueFormProps) {
       </Box>
 
       {/* Form Content */}
-      <Box flexDirection="column" padding={2} borderStyle="single" borderColor={primaryColor}>
+      <Box flexDirection="column" padding={1} borderStyle="single" borderColor={primaryColor} flexGrow={1}>
         {/* Title - with character count */}
         <Box flexDirection="column" marginBottom={2}>
           <Box justifyContent="space-between">
@@ -219,33 +220,31 @@ export function CreateIssueForm({ onClose, onSuccess }: CreateIssueFormProps) {
           )}
         </Box>
 
-        {/* Priority and Type in a row - moved up for faster entry */}
-        <Box gap={4} marginBottom={2}>
+        {/* Priority and Type in a row */}
+        <Box gap={2} marginBottom={1}>
           {/* Priority */}
           <Box flexDirection="column" width="50%">
             <Text color={currentField === 'priority' ? primaryColor : theme.colors.text} bold>
-              Priority {currentField === 'priority' && <Text color={primaryColor}>(use up/down)</Text>}
+              Priority {currentField === 'priority' && '↑↓'}
             </Text>
             <Box borderStyle="single" borderColor={currentField === 'priority' ? primaryColor : theme.colors.border} paddingX={1}>
-              <Text color={theme.colors.text}>
-                P{formData.priority} - {PRIORITY_LABELS[formData.priority]}
-              </Text>
+              <Text>P{formData.priority}</Text>
             </Box>
           </Box>
 
           {/* Issue Type */}
           <Box flexDirection="column" width="50%">
             <Text color={currentField === 'type' ? primaryColor : theme.colors.text} bold>
-              Type {currentField === 'type' && <Text color={primaryColor}>(use up/down)</Text>}
+              Type {currentField === 'type' && '↑↓'}
             </Text>
             <Box borderStyle="single" borderColor={currentField === 'type' ? primaryColor : theme.colors.border} paddingX={1}>
-              <Text color={theme.colors.text}>{formData.issueType}</Text>
+              <Text>{formData.issueType}</Text>
             </Box>
           </Box>
         </Box>
 
-        {/* Description */}
-        <Box flexDirection="column" marginBottom={2}>
+        {/* Description - takes up remaining space */}
+        <Box flexDirection="column" marginBottom={1} flexGrow={1}>
           <Box justifyContent="space-between">
             <Text color={currentField === 'description' ? primaryColor : theme.colors.text} bold>
               Description {currentField === 'description' && <Text color={primaryColor}>(editing)</Text>}
@@ -254,37 +253,45 @@ export function CreateIssueForm({ onClose, onSuccess }: CreateIssueFormProps) {
               {formData.description.length}/{VALIDATION.description.maxLength}
             </Text>
           </Box>
-          <Box borderStyle="single" borderColor={currentField === 'description' ? primaryColor : theme.colors.border} paddingX={1}>
-            <Text>{formData.description || <Text color={theme.colors.textDim}>(optional - enter issue description)</Text>}</Text>
-            {currentField === 'description' && <Text color={theme.colors.textDim}>|</Text>}
-          </Box>
-        </Box>
-
-        {/* Assignee */}
-        <Box flexDirection="column" marginBottom={2}>
-          <Text color={currentField === 'assignee' ? primaryColor : theme.colors.text} bold>
-            Assignee {currentField === 'assignee' && <Text color={primaryColor}>(editing)</Text>}
-          </Text>
-          <Box borderStyle="single" borderColor={currentField === 'assignee' ? primaryColor : theme.colors.border} paddingX={1}>
-            <Text>{formData.assignee || <Text color={theme.colors.textDim}>(optional - assign to someone)</Text>}</Text>
-            {currentField === 'assignee' && <Text color={theme.colors.textDim}>|</Text>}
-          </Box>
-        </Box>
-
-        {/* Labels */}
-        <Box flexDirection="column" marginBottom={2}>
-          <Text color={currentField === 'labels' ? primaryColor : theme.colors.text} bold>
-            Labels {currentField === 'labels' && <Text color={primaryColor}>(editing)</Text>}
-          </Text>
-          <Box borderStyle="single" borderColor={currentField === 'labels' ? primaryColor : theme.colors.border} paddingX={1}>
-            <Text>{formData.labels || <Text color={theme.colors.textDim}>(optional - comma-separated labels)</Text>}</Text>
-            {currentField === 'labels' && <Text color={theme.colors.textDim}>|</Text>}
-          </Box>
-          {formData.labels && (
-            <Text color={theme.colors.textDim}>
-              Labels: {formData.labels.split(',').map(l => l.trim()).filter(l => l).join(', ') || '(none)'}
+          {currentField === 'description' && (
+            <Text color={theme.colors.textDim} dimColor>
+              Page Up/Ctrl+P: scroll up | Page Down/Ctrl+N: scroll down | Type to edit
             </Text>
           )}
+          <ScrollableTextbox
+            value={formData.description || '(optional)'}
+            maxHeight={28}
+            maxWidth={Math.max(40, terminalWidth - 6)}
+            textColor={currentField === 'description' ? primaryColor : theme.colors.text}
+            dimColor={theme.colors.textDim}
+            borderColor={currentField === 'description' ? primaryColor : theme.colors.border}
+            isActive={currentField === 'description'}
+          />
+        </Box>
+
+        {/* Assignee and Labels in a row */}
+        <Box gap={2} marginBottom={1}>
+          {/* Assignee */}
+          <Box flexDirection="column" width="50%">
+            <Text color={currentField === 'assignee' ? primaryColor : theme.colors.text} bold>
+              Assignee {currentField === 'assignee' && <Text color={primaryColor}>(editing)</Text>}
+            </Text>
+            <Box borderStyle="single" borderColor={currentField === 'assignee' ? primaryColor : theme.colors.border} paddingX={1}>
+              <Text>{formData.assignee || <Text color={theme.colors.textDim}>optional</Text>}</Text>
+              {currentField === 'assignee' && <Text color={theme.colors.textDim}>|</Text>}
+            </Box>
+          </Box>
+
+          {/* Labels */}
+          <Box flexDirection="column" width="50%">
+            <Text color={currentField === 'labels' ? primaryColor : theme.colors.text} bold>
+              Labels {currentField === 'labels' && <Text color={primaryColor}>(editing)</Text>}
+            </Text>
+            <Box borderStyle="single" borderColor={currentField === 'labels' ? primaryColor : theme.colors.border} paddingX={1}>
+              <Text>{formData.labels || <Text color={theme.colors.textDim}>optional</Text>}</Text>
+              {currentField === 'labels' && <Text color={theme.colors.textDim}>|</Text>}
+            </Box>
+          </Box>
         </Box>
 
         {/* Status messages */}
